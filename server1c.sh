@@ -7,7 +7,7 @@
 set -e
 
 # --- Defaults ---
-APP="torrserver"
+APP="server1c"
 CTID=${CTID:-9002}
 HN=${HN:-server1c}
 DISK_SIZE=${DISK_SIZE:-8}
