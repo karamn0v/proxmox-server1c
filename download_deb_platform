@@ -1,0 +1,96 @@
+#!/bin/bash
+
+echo "=== СКАЧИВАНИЕ PLATFORM 8.3.27.1559 ==="
+
+# Запрос логина
+read -p "Введите логин: " USERNAME
+read -s -p "Введите пароль: " PASSWORD
+echo
+
+COOKIE_JAR="/tmp/1c_cookies.txt"
+OUTPUT_FILE="deb64_8_3_27_1559.zip"
+
+# Очистка
+rm -f $COOKIE_JAR form.html auth.html download_page.html $OUTPUT_FILE
+
+echo "1. Авторизация на портале 1С..."
+curl -c $COOKIE_JAR \
+     "https://login.1c.ru/login?service=https%3A%2F%2Freleases.1c.ru%2Fpublic%2Fsecurity_check" \
+     --silent --output form.html
+
+EXECUTION=$(grep -oP 'name="execution" value="\K[^"]+' form.html)
+
+curl -L -c $COOKIE_JAR -b $COOKIE_JAR \
+     --data-urlencode "username=$USERNAME" \
+     --data-urlencode "password=$PASSWORD" \
+     --data-urlencode "execution=$EXECUTION" \
+     --data-urlencode "_eventId=submit" \
+     --data-urlencode "geolocation=" \
+     "https://login.1c.ru/login?service=https%3A%2F%2Freleases.1c.ru%2Fpublic%2Fsecurity_check" \
+     --silent --output auth.html
+
+if ! grep -q "Релизы" auth.html; then
+    echo "❌ Ошибка авторизации"
+    exit 1
+fi
+
+echo "✅ Авторизация успешна"
+
+echo "2. Получаем страницу загрузки..."
+curl -b $COOKIE_JAR \
+     "https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.27.1559&path=Platform%5c8_3_27_1559%5cdeb64_8_3_27_1559.zip" \
+     --silent --output download_page.html
+
+# Извлекаем ссылки для скачивания
+DOWNLOAD_URLS=($(grep -oP 'https://dl[0-9]+\.1c\.ru/public/file/get/[a-f0-9-]+' download_page.html))
+
+echo "3. Скачиваем файл..."
+for url in "${DOWNLOAD_URLS[@]}"; do
+    echo "Пробуем: $(echo $url | cut -d'/' -f3)"
+    
+    curl -L -b $COOKIE_JAR \
+         --progress-bar \
+         --output $OUTPUT_FILE \
+         "$url"
+    
+    if [ $? -eq 0 ] && [ -s "$OUTPUT_FILE" ]; then
+        if file "$OUTPUT_FILE" | grep -q "Zip archive"; then
+            echo "✅ Файл успешно скачан!"
+            echo "📦 Имя: $OUTPUT_FILE"
+            echo "💾 Размер: $(du -h $OUTPUT_FILE | cut -f1)"
+            break
+        else
+            echo "❌ Скачался не ZIP файл"
+            rm -f "$OUTPUT_FILE"
+        fi
+    else
+        echo "❌ Ошибка скачивания"
+        rm -f "$OUTPUT_FILE"
+    fi
+done
+
+if [ ! -f "$OUTPUT_FILE" ]; then
+    echo "❌ Все попытки скачивания провалились"
+    exit 1
+fi
+
+# Проверка контрольной суммы
+echo "4. Проверка контрольной суммы..."
+EXPECTED_SHA="af8298102efd2c4f28397ea58942f9c225022653559c42e10e34c323a784fe651a7ddcd3ded4e3891de6f8ebb58fa890116f47608f53dea1df93789167bcbdff"
+ACTUAL_SHA=$(sha512sum "$OUTPUT_FILE" | cut -d' ' -f1)
+
+if [ "$EXPECTED_SHA" = "$ACTUAL_SHA" ]; then
+    echo "✅ Контрольная сумма совпадает!"
+else
+    echo "⚠️ Контрольная сумма не совпадает!"
+    echo "   Ожидалось: ${EXPECTED_SHA:0:20}..."
+    echo "   Получено:  ${ACTUAL_SHA:0:20}..."
+fi
+
+# Очистка
+rm -f $COOKIE_JAR form.html auth.html download_page.html
+USERNAME=""; PASSWORD=""
+
+echo ""
+echo "🎉 ЗАВЕРШЕНО! Файл готов: $OUTPUT_FILE"
+echo "📦 Размер: $(du -h $OUTPUT_FILE | cut -f1)"
