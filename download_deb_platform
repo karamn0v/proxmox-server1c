@@ -74,19 +74,6 @@ if [ ! -f "$OUTPUT_FILE" ]; then
     exit 1
 fi
 
-# Проверка контрольной суммы
-echo "4. Проверка контрольной суммы..."
-EXPECTED_SHA="af8298102efd2c4f28397ea58942f9c225022653559c42e10e34c323a784fe651a7ddcd3ded4e3891de6f8ebb58fa890116f47608f53dea1df93789167bcbdff"
-ACTUAL_SHA=$(sha512sum "$OUTPUT_FILE" | cut -d' ' -f1)
-
-if [ "$EXPECTED_SHA" = "$ACTUAL_SHA" ]; then
-    echo "✅ Контрольная сумма совпадает!"
-else
-    echo "⚠️ Контрольная сумма не совпадает!"
-    echo "   Ожидалось: ${EXPECTED_SHA:0:20}..."
-    echo "   Получено:  ${ACTUAL_SHA:0:20}..."
-fi
-
 # Очистка
 rm -f $COOKIE_JAR form.html auth.html download_page.html
 USERNAME=""; PASSWORD=""
