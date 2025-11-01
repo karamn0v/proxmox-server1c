@@ -1,12 +1,7 @@
 #!/bin/bash
 
-echo "=== СКАЧИВАНИЕ PLATFORM 8.3.27.1559 ==="
-
-# Запрос логина
-read -p "Введите логин: " USERNAME
-read -s -p "Введите пароль: " PASSWORD
-echo
-
+USERNAME='ЛОГИН'
+PASSWORD='ПАРОЛЬ'
 COOKIE_JAR="/tmp/1c_cookies.txt"
 OUTPUT_FILE="deb64_8_3_27_1559.zip"
 
@@ -40,19 +35,18 @@ echo "2. Получаем страницу загрузки..."
 curl -b $COOKIE_JAR \
      "https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.27.1559&path=Platform%5c8_3_27_1559%5cdeb64_8_3_27_1559.zip" \
      --silent --output download_page.html
-
 # Извлекаем ссылки для скачивания
 DOWNLOAD_URLS=($(grep -oP 'https://dl[0-9]+\.1c\.ru/public/file/get/[a-f0-9-]+' download_page.html))
 
 echo "3. Скачиваем файл..."
 for url in "${DOWNLOAD_URLS[@]}"; do
     echo "Пробуем: $(echo $url | cut -d'/' -f3)"
-    
+
     curl -L -b $COOKIE_JAR \
          --progress-bar \
          --output $OUTPUT_FILE \
          "$url"
-    
+
     if [ $? -eq 0 ] && [ -s "$OUTPUT_FILE" ]; then
         if file "$OUTPUT_FILE" | grep -q "Zip archive"; then
             echo "✅ Файл успешно скачан!"
@@ -76,7 +70,6 @@ fi
 
 # Очистка
 rm -f $COOKIE_JAR form.html auth.html download_page.html
-USERNAME=""; PASSWORD=""
 
 echo ""
 echo "🎉 ЗАВЕРШЕНО! Файл готов: $OUTPUT_FILE"
