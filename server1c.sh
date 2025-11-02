@@ -56,9 +56,12 @@ pct exec $CTID -- bash -c "
   fc-cache –fv
   mkdir -p /1c/soft/1c
   cd /1c/soft/1c
-  wget -q https://1c.e-r-p.ru/deb64_8_3_27_1559.zip
+  wget -q https://raw.githubusercontent.com/karamn0v/proxmox-server1c/main/download_deb_platform.sh
+  chmod +x download_deb_platform.sh
+  ./download_deb_platform
   unzip -q deb64_8_3_27_1559.zip
   rm deb64_8_3_27_1559.zip
+  rm download_deb_platform.sh
   gdebi 1c-enterprise83-common_8.3.27-1559_amd64.deb
   gdebi 1c-enterprise83-server_8.3.27-1559_amd64.deb
   gdebi 1c-enterprise83-ws_8.3.27-1559_amd64.deb
