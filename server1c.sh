@@ -51,9 +51,12 @@ sleep 5
 # --- Install server 1c ---
 echo ">>> Installing server 1c inside CT..."
 
+#  Установка шрифтов, не работает в Крыму.
+#  apt-get install -y ttf-mscorefonts-installer
+#  fc-cache –fv
+
 pct exec $CTID -- bash -c "
-  apt-get update && apt-get install -y wget curl gdebi ttf-mscorefonts-installer unzip libfreetype6 libgsf-1-common unixodbc glib2.0
-  fc-cache –fv
+  apt-get update && apt-get install -y wget curl gdebi unzip libfreetype6 libgsf-1-common unixodbc glib2.0
   mkdir -p /1c/soft/1c
   cd /1c/soft/1c
   wget -q https://raw.githubusercontent.com/karamn0v/proxmox-server1c/main/download_deb_platform.sh
